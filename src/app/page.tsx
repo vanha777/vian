@@ -1,66 +1,58 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+import * as React from 'react';
+import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
+import StatsCard from '@/components/Dashboard/StatsCard';
+import PropertyTable from '@/components/Dashboard/PropertyTable';
+import BusinessIcon from '@mui/icons-material/BusinessRounded';
+import PeopleIcon from '@mui/icons-material/PeopleRounded';
+import HomeWorkIcon from '@mui/icons-material/HomeWorkRounded';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoneyRounded';
+import { STATS } from '@/lib/mockData';
+import ChatWidget from '@/components/Chat/ChatWidget';
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <Box>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatsCard
+            title="Total Properties"
+            value={STATS.totalProperties}
+            icon={<BusinessIcon fontSize="large" />}
+            trend="+12% since last month"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatsCard
+            title="Total Tenants"
+            value={STATS.totalTenants}
+            icon={<PeopleIcon fontSize="large" />}
+            trend="+5% since last month"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatsCard
+            title="Vacancy Rate"
+            value={STATS.vacancyRate}
+            icon={<HomeWorkIcon fontSize="large" />}
+            trend="-0.5% since last month"
+            trendColor="success"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatsCard
+            title="Total Revenue"
+            value={STATS.totalRevenue}
+            icon={<AttachMoneyIcon fontSize="large" />}
+            trend="+8% since last month"
+          />
+        </Grid>
+      </Grid>
+
+      <PropertyTable />
+
+      <ChatWidget />
+    </Box>
   );
 }
