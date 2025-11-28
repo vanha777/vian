@@ -34,35 +34,19 @@ export default function Avatar3D() {
                     width: '100%',
                     height: '100%',
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #38BDF8 0%, #A78BFA 100%)',
+                    background: 'linear-gradient(135deg, #38BDF8 0%, #A78BFA 100%)', // Fallback gradient
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     position: 'relative',
-                    transformStyle: 'preserve-3d',
-                    '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        inset: 2,
-                        borderRadius: '50%',
-                        background: 'url(/static/images/avatar/ai-avatar.jpg)', // Placeholder, will use a gradient or icon if image fails
-                        backgroundSize: 'cover',
-                        backgroundColor: 'rgba(255,255,255,0.2)',
-                        backdropFilter: 'blur(5px)',
-                        border: '2px solid rgba(255,255,255,0.5)',
-                    },
+                    overflow: 'hidden', // Ensure image stays within circle
+                    border: '2px solid rgba(255,255,255,0.5)',
                 }}
             >
-                {/* Inner "Core" to give it depth */}
-                <Box
-                    sx={{
-                        width: '60%',
-                        height: '60%',
-                        borderRadius: '50%',
-                        background: 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(255,255,255,0.1))',
-                        boxShadow: 'inset 0 0 10px rgba(255,255,255,0.5)',
-                        zIndex: 1,
-                    }}
+                <img
+                    src="/images/vian_avatar.png"
+                    alt="Vian AI Avatar"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
             </Box>
 
