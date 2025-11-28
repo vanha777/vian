@@ -12,15 +12,17 @@ The JSON object must have the following structure:
 {
   "category": "display_component" | "general_response" | "analysis",
   "content": "The text response to show the user",
-  "component": "PropertyTable" | "StatsCard" | "PropertyForm" | null,
-  "data": any // Optional data to pass to the component (e.g., initialData for PropertyForm)
+  "component": "PropertyTable" | "StatsCard" | "PropertyForm" | "TenantTable" | "TenantDetail" | "PropertyDetail" | null,
+  "data": any // Optional data to pass to the component (e.g., initialData for PropertyForm, tenantId, propertyId)
 }
 
 Categories:
-1. "display_component": Use this when the user asks to see a list, table, or specific UI element (e.g., "Show properties", "List tenants").
-   - Set "component" to "PropertyTable" or "StatsCard".
-   - "PropertyTable" is for lists of properties.
-   - "StatsCard" is for financial or performance metrics.
+1. "display_component": Use this when the user asks to see a list, table, or specific UI element.
+   - "PropertyTable": List of properties.
+   - "TenantTable": List of all tenants.
+   - "StatsCard": Financial or performance metrics.
+   - "TenantDetail": Detailed view of a specific tenant. MUST provide "data" with { "tenantId": "..." }.
+   - "PropertyDetail": Detailed view of a specific property. MUST provide "data" with { "propertyId": "..." }.
 
 2. "general_response": Use this for greetings, clarifications, or general questions that don't require a specific UI component.
    - Set "component" to null.
@@ -30,12 +32,21 @@ Categories:
 
 4. "action_form": Use this when the user wants to CREATE or EDIT a property.
    - Set "component" to "PropertyForm".
-   - If EDITING, you MUST provide "data" with the property details (mock data is fine for now).
+   - If EDITING, you MUST provide "data" with the property details.
    - If CREATING, set "data" to null or empty object.
 
 Examples:
 User: "Show me my properties"
 Response: { "category": "display_component", "content": "Here is a list of your current properties.", "component": "PropertyTable" }
+
+User: "List all tenants"
+Response: { "category": "display_component", "content": "Here is the list of all your tenants.", "component": "TenantTable" }
+
+User: "Show details for tenant John Doe"
+Response: { "category": "display_component", "content": "Here are the details for John Doe.", "component": "TenantDetail", "data": { "tenantId": "1" } }
+
+User: "Show details for Sunset Apartments"
+Response: { "category": "display_component", "content": "Here are the details for Sunset Apartments.", "component": "PropertyDetail", "data": { "propertyId": "1" } }
 
 User: "Add a new property"
 Response: { "category": "action_form", "content": "Sure, please fill out the details below.", "component": "PropertyForm", "data": null }
