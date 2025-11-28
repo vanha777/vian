@@ -11,6 +11,7 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import PersonIcon from '@mui/icons-material/Person';
 import Avatar3D from '@/components/Manager/Avatar3D';
 import PropertyTable from '@/components/Dashboard/PropertyTable';
+import PropertyForm from '@/components/Properties/PropertyForm';
 import StatsCard from '@/components/Dashboard/StatsCard';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,15 +20,20 @@ interface Message {
     role: 'user' | 'assistant';
     content: string;
     component?: React.ReactNode;
+    rawJson?: string;
 }
+
+import { chatService } from '@/services/chat';
 
 export default function ManagerPage() {
     const [input, setInput] = React.useState('');
+    const [isTyping, setIsTyping] = React.useState(false);
     const [messages, setMessages] = React.useState<Message[]>([
         {
             id: '1',
             role: 'assistant',
             content: "Hello Patrick. I'm Vian, your AI Property Manager. How can I help you today?",
+            rawJson: JSON.stringify({ category: "general_response", content: "Hello Patrick. I'm Vian, your AI Property Manager. How can I help you today?", component: null })
         },
     ]);
     const messagesEndRef = React.useRef<HTMLDivElement>(null);
@@ -51,54 +57,88 @@ export default function ManagerPage() {
 
         setMessages((prev) => [...prev, userMessage]);
         setInput('');
+        setIsTyping(true);
 
-        // Simulate AI processing
-        setTimeout(() => {
-            let responseContent = "I'm on it.";
-            let responseComponent = undefined;
+        try {
+            // Convert messages to history format for API
+            // Use rawJson for assistant messages to maintain JSON context for the LLM
+            const history = messages.map(m => ({
+                role: m.role,
+                parts: m.rawJson || m.content
+            }));
 
-            const lowerInput = userMessage.content.toLowerCase();
+            const response = await chatService(history, userMessage.content);
 
-            if (lowerInput.includes('show properties') || lowerInput.includes('list properties')) {
-                responseContent = "Here are your current properties.";
-                responseComponent = (
+            let componentNode = null;
+
+            if (response.component === 'PropertyTable') {
+                componentNode = (
                     <Box sx={{ mt: 2, width: '100%', maxWidth: '800px' }}>
                         <PropertyTable />
                     </Box>
                 );
-            } else if (lowerInput.includes('stats') || lowerInput.includes('revenue')) {
-                responseContent = "Here is your latest performance overview.";
-                responseComponent = (
-                    <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                        <StatsCard
-                            title="Total Revenue"
-                            value="$245,000"
-                            icon={<AttachMoneyIcon />}
-                            trend="+12% vs last month"
-                            trendColor="success"
-                        />
-                        <StatsCard
-                            title="Occupancy Rate"
-                            value="94%"
-                            icon={<PersonIcon />}
-                            trend="+2% vs last month"
-                            trendColor="success"
-                        />
+            } else if (response.component === 'StatsCard') {
+                // If data is provided, use it. Otherwise default to the example.
+                if (response.data) {
+                    componentNode = (
+                        <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                            <StatsCard
+                                title={response.data.title || "Metric"}
+                                value={response.data.value || "0"}
+                                icon={<AttachMoneyIcon />}
+                                trend={response.data.trend || ""}
+                                trendColor="success"
+                            />
+                        </Box>
+                    );
+                } else {
+                    componentNode = (
+                        <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                            <StatsCard
+                                title="Total Revenue"
+                                value="$245,000"
+                                icon={<AttachMoneyIcon />}
+                                trend="+12% vs last month"
+                                trendColor="success"
+                            />
+                            <StatsCard
+                                title="Occupancy Rate"
+                                value="94%"
+                                icon={<PersonIcon />}
+                                trend="+2% vs last month"
+                                trendColor="success"
+                            />
+                        </Box>
+                    );
+                }
+            } else if (response.component === 'PropertyForm') {
+                componentNode = (
+                    <Box sx={{ mt: 2, width: '100%', maxWidth: '800px', bgcolor: 'background.paper', p: 3, borderRadius: 2 }}>
+                        <PropertyForm initialData={response.data || undefined} isEdit={!!response.data} />
                     </Box>
                 );
-            } else {
-                responseContent = "I can help you manage properties, view stats, or handle tenant requests. Try asking 'Show properties' or 'Show stats'.";
             }
 
             const aiMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 role: 'assistant',
-                content: responseContent,
-                component: responseComponent,
+                content: response.content,
+                component: componentNode,
+                rawJson: JSON.stringify(response)
             };
 
             setMessages((prev) => [...prev, aiMessage]);
-        }, 1000);
+
+        } catch (error) {
+            console.error("Chat Error", error);
+            setMessages((prev) => [...prev, {
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: "Sorry, I encountered an error. Please try again."
+            }]);
+        } finally {
+            setIsTyping(false);
+        }
     };
 
     return (
@@ -186,6 +226,13 @@ export default function ManagerPage() {
                             </Box>
                         </motion.div>
                     ))}
+                    {isTyping && (
+                        <Box sx={{ display: 'flex', gap: 1, p: 2 }}>
+                            <Box sx={{ width: 8, height: 8, bgcolor: 'primary.main', borderRadius: '50%', animation: 'pulse 1s infinite' }} />
+                            <Box sx={{ width: 8, height: 8, bgcolor: 'primary.main', borderRadius: '50%', animation: 'pulse 1s infinite 0.2s' }} />
+                            <Box sx={{ width: 8, height: 8, bgcolor: 'primary.main', borderRadius: '50%', animation: 'pulse 1s infinite 0.4s' }} />
+                        </Box>
+                    )}
                 </AnimatePresence>
                 <div ref={messagesEndRef} />
             </Box>
