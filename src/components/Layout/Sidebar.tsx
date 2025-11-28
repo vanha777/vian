@@ -1,7 +1,6 @@
 'use client';
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -13,6 +12,7 @@ import PeopleIcon from '@mui/icons-material/PeopleRounded';
 import ChatIcon from '@mui/icons-material/ChatBubbleRounded';
 import SettingsIcon from '@mui/icons-material/SettingsRounded';
 import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
 import { usePathname, useRouter } from 'next/navigation';
 
 const drawerWidth = 280;
@@ -30,46 +30,54 @@ export default function Sidebar() {
     const router = useRouter();
 
     return (
-        <Drawer
-            variant="permanent"
+        <Paper
+            elevation={0}
             sx={{
                 width: drawerWidth,
                 flexShrink: 0,
-                [`& .MuiDrawer-paper`]: {
-                    width: drawerWidth,
-                    boxSizing: 'border-box',
-                    borderRight: 'none',
-                    bgcolor: 'background.default',
-                    padding: 2,
-                },
+                borderRadius: '24px',
+                bgcolor: 'background.paper',
+                p: 3,
+                display: 'flex',
+                flexDirection: 'column',
+                height: 'calc(100vh - 48px)', // Full height minus padding
+                position: 'sticky',
+                top: 24,
             }}
         >
-            <Box sx={{ mb: 4, px: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ mb: 6, px: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box sx={{
-                    width: 32,
-                    height: 32,
+                    width: 40,
+                    height: 40,
                     background: 'linear-gradient(135deg, #38BDF8 0%, #A78BFA 100%)',
-                    borderRadius: '8px'
+                    borderRadius: '12px',
+                    boxShadow: '0px 4px 12px rgba(56, 189, 248, 0.3)'
                 }} />
-                <Typography variant="h5" fontWeight="bold" color="text.primary">
+                <Typography variant="h5" fontWeight="800" color="text.primary" sx={{ letterSpacing: '-0.5px' }}>
                     Vian
                 </Typography>
             </Box>
 
-            <List>
+            <List sx={{ gap: 1, display: 'flex', flexDirection: 'column' }}>
                 {MENU_ITEMS.map((item) => {
                     const active = pathname === item.path || (item.path !== '/' && pathname.startsWith(item.path));
                     return (
-                        <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
+                        <ListItem key={item.text} disablePadding>
                             <ListItemButton
                                 onClick={() => router.push(item.path)}
                                 sx={{
-                                    borderRadius: '12px',
+                                    borderRadius: '16px',
+                                    mb: 1,
+                                    py: 1.5,
+                                    px: 2.5,
                                     background: active ? 'linear-gradient(135deg, #38BDF8 0%, #A78BFA 100%)' : 'transparent',
-                                    color: active ? 'primary.contrastText' : 'text.secondary',
+                                    color: active ? 'white' : 'text.secondary',
+                                    transition: 'all 0.2s ease-in-out',
                                     '&:hover': {
-                                        bgcolor: active ? 'transparent' : 'rgba(0,0,0,0.04)',
+                                        bgcolor: active ? 'transparent' : 'rgba(0,0,0,0.03)',
+                                        transform: 'translateX(4px)',
                                     },
+                                    boxShadow: active ? '0px 4px 12px rgba(56, 189, 248, 0.25)' : 'none',
                                 }}
                             >
                                 <ListItemIcon sx={{ color: active ? 'inherit' : 'text.secondary', minWidth: 40 }}>
@@ -77,16 +85,16 @@ export default function Sidebar() {
                                 </ListItemIcon>
                                 <ListItemText
                                     primary={item.text}
-                                    primaryTypographyProps={{ fontWeight: active ? 600 : 500 }}
+                                    primaryTypographyProps={{
+                                        fontWeight: active ? 600 : 500,
+                                        fontSize: '0.95rem'
+                                    }}
                                 />
-                                {active && (
-                                    <Box sx={{ width: 4, height: 24, bgcolor: 'white', borderRadius: 2, position: 'absolute', right: 8 }} />
-                                )}
                             </ListItemButton>
                         </ListItem>
                     );
                 })}
             </List>
-        </Drawer>
+        </Paper>
     );
 }
