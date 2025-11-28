@@ -1,6 +1,8 @@
 'use client';
 import * as React from 'react';
 import Box from '@mui/material/Box';
+import Link from 'next/link';
+import Avatar3D from '@/components/Manager/Avatar3D';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -45,17 +47,10 @@ export default function Sidebar() {
                 top: 24,
             }}
         >
-            <Box sx={{ mb: 6, px: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{
-                    width: 40,
-                    height: 40,
-                    background: 'linear-gradient(135deg, #38BDF8 0%, #A78BFA 100%)',
-                    borderRadius: '12px',
-                    boxShadow: '0px 4px 12px rgba(56, 189, 248, 0.3)'
-                }} />
-                <Typography variant="h5" fontWeight="800" color="text.primary" sx={{ letterSpacing: '-0.5px' }}>
-                    Vian
-                </Typography>
+            <Box sx={{ mb: 4, px: 2, display: 'flex', justifyContent: 'center' }}>
+                <Link href="/manager" style={{ textDecoration: 'none' }}>
+                    <Avatar3D />
+                </Link>
             </Box>
 
             <List sx={{ gap: 1, display: 'flex', flexDirection: 'column' }}>

@@ -90,7 +90,11 @@ export default function PropertyPage() {
                         </Box>
                     </Box>
                 </Box>
-                <Button startIcon={<EditIcon />} variant="outlined">
+                <Button
+                    startIcon={<EditIcon />}
+                    variant="outlined"
+                    onClick={() => router.push(`/properties/${property.id}/edit`)}
+                >
                     Edit Property
                 </Button>
             </Box>

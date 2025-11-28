@@ -66,15 +66,25 @@ export default function PropertyTable() {
         <Card sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h6" fontWeight="bold">Properties</Typography>
-                <Search>
-                    <SearchIconWrapper>
-                        <SearchIcon />
-                    </SearchIconWrapper>
-                    <StyledInputBase
-                        placeholder="Search properties..."
-                        inputProps={{ 'aria-label': 'search' }}
-                    />
-                </Search>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Search>
+                        <SearchIconWrapper>
+                            <SearchIcon />
+                        </SearchIconWrapper>
+                        <StyledInputBase
+                            placeholder="Search properties..."
+                            inputProps={{ 'aria-label': 'search' }}
+                        />
+                    </Search>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => router.push('/properties/new')}
+                        sx={{ whiteSpace: 'nowrap' }}
+                    >
+                        Add Property
+                    </Button>
+                </Box>
             </Box>
 
             <TableContainer>

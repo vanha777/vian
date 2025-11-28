@@ -8,6 +8,7 @@ export const PROPERTIES = [
         image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=400',
         revenue: 45000,
         status: 'Good',
+        type: 'Residential',
     },
     {
         id: '2',
@@ -18,6 +19,7 @@ export const PROPERTIES = [
         image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=400',
         revenue: 32000,
         status: 'Maintenance',
+        type: 'Residential',
     },
     {
         id: '3',
@@ -28,6 +30,7 @@ export const PROPERTIES = [
         image: 'https://images.unsplash.com/photo-1484154218962-a1c002085d2f?auto=format&fit=crop&w=400',
         revenue: 120000,
         status: 'Good',
+        type: 'Commercial',
     },
     {
         id: '4',
@@ -38,6 +41,7 @@ export const PROPERTIES = [
         image: 'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=400',
         revenue: 15000,
         status: 'Good',
+        type: 'Residential',
     },
     {
         id: '5',
@@ -48,6 +52,7 @@ export const PROPERTIES = [
         image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=400',
         revenue: 28000,
         status: 'Warning',
+        type: 'Mixed Use',
     },
 ];
 
