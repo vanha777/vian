@@ -1,118 +1,51 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { NextResponse } from 'next/server';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { streamText } from 'ai';
+import { tools } from '@/lib/ai/tools';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const google = createGoogleGenerativeAI({
+    apiKey: process.env.GEMINI_API_KEY,
+});
 
-const SYSTEM_PROMPT = `
-You are Vian, an advanced AI Property Manager. Your role is to assist users with managing their properties, tenants, and analyzing performance.
-
-You must respond in a strictly structured JSON format. Do not include any markdown formatting (like \`\`\`json). Just the raw JSON object.
-
-The JSON object must have the following structure:
-{
-  "category": "display_component" | "general_response" | "analysis",
-  "content": "The text response to show the user",
-  "component": "PropertyTable" | "StatsCard" | "PropertyForm" | "TenantTable" | "TenantDetail" | "PropertyDetail" | null,
-  "data": any // Optional data to pass to the component (e.g., initialData for PropertyForm, tenantId, propertyId)
-}
-
-Categories:
-1. "display_component": Use this when the user asks to see a list, table, or specific UI element.
-   - "PropertyTable": List of properties.
-   - "TenantTable": List of all tenants.
-   - "StatsCard": Financial or performance metrics.
-   - "TenantDetail": Detailed view of a specific tenant. MUST provide "data" with { "tenantId": "..." }.
-   - "PropertyDetail": Detailed view of a specific property. MUST provide "data" with { "propertyId": "..." }.
-
-2. "general_response": Use this for greetings, clarifications, or general questions that don't require a specific UI component.
-   - Set "component" to null.
-
-3. "analysis": Use this when the user asks for insights, trends, or complex data analysis.
-   - Set "component" to "StatsCard" if relevant, or null if text-only analysis is sufficient.
-
-4. "action_form": Use this when the user wants to CREATE or EDIT a property.
-   - Set "component" to "PropertyForm".
-   - If EDITING, you MUST provide "data" with the property details.
-   - If CREATING, set "data" to null or empty object.
-
-Examples:
-User: "Show me my properties"
-Response: { "category": "display_component", "content": "Here is a list of your current properties.", "component": "PropertyTable" }
-
-User: "List all tenants"
-Response: { "category": "display_component", "content": "Here is the list of all your tenants.", "component": "TenantTable" }
-
-User: "Show details for tenant John Doe"
-Response: { "category": "display_component", "content": "Here are the details for John Doe.", "component": "TenantDetail", "data": { "tenantId": "1" } }
-
-User: "Show details for Sunset Apartments"
-Response: { "category": "display_component", "content": "Here are the details for Sunset Apartments.", "component": "PropertyDetail", "data": { "propertyId": "1" } }
-
-User: "Add a new property"
-Response: { "category": "action_form", "content": "Sure, please fill out the details below.", "component": "PropertyForm", "data": null }
-
-User: "Edit the property at 123 Main St"
-Response: { "category": "action_form", "content": "Here is the form for 123 Main St.", "component": "PropertyForm", "data": { "name": "Sunset Apartments", "address": "123 Main St", "type": "Residential", "status": "Good", "units": 12, "revenue": 15000 } }
-
-User: "How is my revenue doing?"
-Response: { "category": "analysis", "content": "Your revenue is up 12% this month, totaling $245,000.", "component": "StatsCard", "data": { "title": "Total Revenue", "value": "$245,000", "trend": "+12% vs last month" } }
-
-User: "Hello"
-Response: { "category": "general_response", "content": "Hello! I'm Vian. How can I help you manage your properties today?", "component": null }
-`;
+export const maxDuration = 30;
 
 export async function POST(req: Request) {
     try {
-        const { history, message } = await req.json();
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+        const { messages } = await req.json();
 
-        const chat = model.startChat({
-            history: [
-                {
-                    role: 'user',
-                    parts: [{ text: SYSTEM_PROMPT }],
-                },
-                {
-                    role: 'model',
-                    parts: [{ text: '{"category": "general_response", "content": "Understood. I will respond in strict JSON format.", "component": null}' }],
-                },
-                ...history.map((msg: any) => ({
-                    role: msg.role === 'assistant' ? 'model' : 'user',
-                    parts: [{ text: msg.parts }]
-                }))
-            ],
+        const result = streamText({
+            model: google('gemini-2.5-flash-lite'),
+            messages,
+            system: `You are Vian, an advanced AI Property Manager. Your role is to assist users with managing their properties, tenants, and analyzing performance.
+    
+    You have access to several tools to help you retrieve information and perform actions.
+    - Use 'get_properties' to show a list of properties.
+    - Use 'get_tenants' to show a list of tenants.
+    - Use 'get_stats' to show financial and operational statistics.
+    - Use 'get_property_detail' when the user asks for details about a specific property.
+    - Use 'get_tenant_detail' when the user asks for details about a specific tenant.
+    - Use 'create_property' when the user wants to add a new property.
+    - Use 'edit_property' when the user wants to edit an existing property.
+    
+    If the user's request can be answered by one of these tools, call the appropriate tool.
+    If the user's request is a general question or greeting, respond with a helpful text message.
+    `,
+            tools: tools,
         });
 
-        const result = await chat.sendMessage(message);
-        const response = result.response;
-        const text = response.text();
-
-        // Clean up potential markdown code blocks if the model slips up
-        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-        try {
-            const jsonResponse = JSON.parse(cleanText);
-            return NextResponse.json(jsonResponse);
-        } catch (e) {
-            console.error('Failed to parse JSON response:', text);
-            return NextResponse.json({
-                category: 'general_response',
-                content: text, // Fallback to raw text if parsing fails
-                component: null,
-            });
-        }
-    } catch (error: any) {
-        console.error('Gemini API Error Details:', {
-            message: error.message,
-            stack: error.stack,
-            apiKeyPresent: !!process.env.GEMINI_API_KEY,
-            apiKeyLength: process.env.GEMINI_API_KEY?.length
+        return result.toDataStreamResponse({
+            getErrorMessage: (error) => {
+                console.error('Stream Error Details:', error);
+                if (error instanceof Error) {
+                    return error.message;
+                }
+                return 'An unknown error occurred';
+            }
         });
-
-        return NextResponse.json({
-            category: 'general_response',
-            content: `I'm having trouble connecting. Error: ${error.message || 'Unknown error'}. (API Key Present: ${!!process.env.GEMINI_API_KEY})`,
-            component: null,
-        }, { status: 500 });
+    } catch (error) {
+        console.error('Chat API Error:', error);
+        return new Response(JSON.stringify({ error: 'An error occurred processing your request.' }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+        });
     }
 }

@@ -18,30 +18,19 @@ import TenantDetail from '@/components/Tenants/TenantDetail';
 import PropertyDetail from '@/components/Properties/PropertyDetail';
 import StatsCard from '@/components/Dashboard/StatsCard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { chatService } from '@/services/chat';
-
-interface Message {
-    id: string;
-    role: 'user' | 'assistant';
-    content: string;
-    rawJson?: string;
-}
+import { useChat } from 'ai/react';
 
 export default function ManagerPage() {
-    const [input, setInput] = React.useState('');
-    const [isTyping, setIsTyping] = React.useState(false);
     const [isChatOpen, setIsChatOpen] = React.useState(false);
     const [activeComponent, setActiveComponent] = React.useState<React.ReactNode | null>(null);
-
-    const [messages, setMessages] = React.useState<Message[]>([
-        {
-            id: '1',
-            role: 'assistant',
-            content: "Hello Patrick. I'm Vian, your AI Property Manager. How can I help you today?",
-            rawJson: JSON.stringify({ category: "general_response", content: "Hello Patrick. I'm Vian, your AI Property Manager. How can I help you today?", component: null })
-        },
-    ]);
     const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+    const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+        maxSteps: 5,
+        onFinish: (message) => {
+            // Optional: Handle side effects after stream finishes
+        },
+    });
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -51,136 +40,92 @@ export default function ManagerPage() {
         scrollToBottom();
     }, [messages, isChatOpen]);
 
-    const handleSend = async () => {
-        if (!input.trim()) return;
+    // Effect to handle tool invocations and update the main view
+    React.useEffect(() => {
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage?.role === 'assistant' && lastMessage.toolInvocations) {
+            // We take the last tool invocation to decide what to show in the main view
+            const toolInvocation = lastMessage.toolInvocations[lastMessage.toolInvocations.length - 1];
 
-        const userMessage: Message = {
-            id: Date.now().toString(),
-            role: 'user',
-            content: input,
-        };
+            if (!toolInvocation) return;
 
-        setMessages((prev) => [...prev, userMessage]);
-        setInput('');
-        setIsTyping(true);
+            const { toolName, args } = toolInvocation;
 
-        try {
-            const history = messages.map(m => ({
-                role: m.role,
-                parts: m.rawJson || m.content
-            }));
-
-            const response = await chatService(history, userMessage.content);
-
-            let componentNode = null;
-            let aiContent = response.content;
-
-            if (response.component === 'PropertyTable') {
-                componentNode = (
+            if (toolName === 'get_properties') {
+                setActiveComponent(
                     <Box sx={{ width: '100%', maxWidth: '1200px', mx: 'auto' }}>
                         <PropertyTable />
                     </Box>
                 );
-                aiContent = "I've opened the property list for you in the main view.";
-            } else if (response.component === 'StatsCard') {
-                if (response.data) {
-                    componentNode = (
-                        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
-                            <StatsCard
-                                title={response.data.title || "Metric"}
-                                value={response.data.value || "0"}
-                                icon={<AttachMoneyIcon />}
-                                trend={response.data.trend || ""}
-                                trendColor="success"
-                            />
-                        </Box>
-                    );
-                } else {
-                    componentNode = (
-                        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
-                            <StatsCard
-                                title="Total Revenue"
-                                value="$245,000"
-                                icon={<AttachMoneyIcon />}
-                                trend="+12% vs last month"
-                                trendColor="success"
-                            />
-                            <StatsCard
-                                title="Occupancy Rate"
-                                value="94%"
-                                icon={<PersonIcon />}
-                                trend="+2% vs last month"
-                                trendColor="success"
-                            />
-                        </Box>
-                    );
-                }
-                aiContent = "I've displayed the latest statistics in the main view.";
-            } else if (response.component === 'PropertyForm') {
-                componentNode = (
-                    <Box sx={{ width: '100%', maxWidth: '800px', mx: 'auto', bgcolor: 'background.paper', p: 4, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-                        <Typography variant="h5" fontWeight="bold" mb={3}>
-                            {response.data ? 'Edit Property' : 'Add New Property'}
-                        </Typography>
-                        <PropertyForm initialData={response.data || undefined} isEdit={!!response.data} />
+            } else if (toolName === 'get_stats') {
+                // For stats, we might want to render based on args or just show the default stats card
+                // The args from the tool execution (result) would be more useful here, but for now we render the component
+                setActiveComponent(
+                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+                        <StatsCard
+                            title="Total Revenue"
+                            value="$245,000"
+                            icon={<AttachMoneyIcon />}
+                            trend="+12% vs last month"
+                            trendColor="success"
+                        />
+                        <StatsCard
+                            title="Occupancy Rate"
+                            value="94%"
+                            icon={<PersonIcon />}
+                            trend="+2% vs last month"
+                            trendColor="success"
+                        />
                     </Box>
                 );
-                aiContent = response.data ? "I've opened the edit form for you." : "I've opened the new property form for you.";
-            } else if (response.component === 'TenantTable') {
-                componentNode = (
+            } else if (toolName === 'create_property') {
+                setActiveComponent(
+                    <Box sx={{ width: '100%', maxWidth: '800px', mx: 'auto', bgcolor: 'background.paper', p: 4, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                        <Typography variant="h5" fontWeight="bold" mb={3}>
+                            Add New Property
+                        </Typography>
+                        <PropertyForm isEdit={false} />
+                    </Box>
+                );
+            } else if (toolName === 'edit_property') {
+                // In a real scenario, we'd use the result of the tool call to populate initialData
+                // For now, we'll assume the tool returns the data needed
+                setActiveComponent(
+                    <Box sx={{ width: '100%', maxWidth: '800px', mx: 'auto', bgcolor: 'background.paper', p: 4, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                        <Typography variant="h5" fontWeight="bold" mb={3}>
+                            Edit Property
+                        </Typography>
+                        {/* Mocking initial data for edit */}
+                        <PropertyForm initialData={{ name: 'Sunset Apartments', address: '123 Main St', type: 'Residential', status: 'Good', units: 12, revenue: 15000, image: '/static/images/property/1.jpg' }} isEdit={true} />
+                    </Box>
+                );
+            } else if (toolName === 'get_tenants') {
+                setActiveComponent(
                     <Box sx={{ width: '100%', maxWidth: '1200px', mx: 'auto' }}>
                         <TenantTable />
                     </Box>
                 );
-                aiContent = "I've opened the tenant list for you.";
-            } else if (response.component === 'TenantDetail') {
-                if (response.data && response.data.tenantId) {
-                    componentNode = (
+            } else if (toolName === 'get_tenant_detail') {
+                const tenantId = (args as any).tenantId;
+                if (tenantId) {
+                    setActiveComponent(
                         <Box sx={{ width: '100%', maxWidth: '1200px', mx: 'auto' }}>
-                            <TenantDetail tenantId={response.data.tenantId} />
+                            <TenantDetail tenantId={tenantId} />
                         </Box>
                     );
-                    aiContent = "I've opened the tenant details for you.";
-                } else {
-                    aiContent = "I couldn't find the tenant details. Please try again.";
                 }
-            } else if (response.component === 'PropertyDetail') {
-                if (response.data && response.data.propertyId) {
-                    componentNode = (
+            } else if (toolName === 'get_property_detail') {
+                const propertyId = (args as any).propertyId;
+                if (propertyId) {
+                    setActiveComponent(
                         <Box sx={{ width: '100%', maxWidth: '1200px', mx: 'auto' }}>
-                            <PropertyDetail propertyId={response.data.propertyId} />
+                            <PropertyDetail propertyId={propertyId} />
                         </Box>
                     );
-                    aiContent = "I've opened the property details for you.";
-                } else {
-                    aiContent = "I couldn't find the property details. Please try again.";
                 }
             }
-
-            if (componentNode) {
-                setActiveComponent(componentNode);
-            }
-
-            const aiMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                role: 'assistant',
-                content: aiContent,
-                rawJson: JSON.stringify(response)
-            };
-
-            setMessages((prev) => [...prev, aiMessage]);
-
-        } catch (error) {
-            console.error("Chat Error", error);
-            setMessages((prev) => [...prev, {
-                id: Date.now().toString(),
-                role: 'assistant',
-                content: "Sorry, I encountered an error. Please try again."
-            }]);
-        } finally {
-            setIsTyping(false);
         }
-    };
+    }, [messages]);
 
     return (
         <Box sx={{
@@ -344,11 +289,14 @@ export default function ManagerPage() {
                                             borderTopRightRadius: msg.role === 'user' ? '4px' : '16px',
                                         }}
                                     >
-                                        <Typography variant="body2" lineHeight={1.5}>{msg.content}</Typography>
+                                        <Typography variant="body2" lineHeight={1.5}>
+                                            {msg.content}
+                                            {/* Optional: Render tool invocation status or result here if needed */}
+                                        </Typography>
                                     </Paper>
                                 </Box>
                             ))}
-                            {isTyping && (
+                            {isLoading && (
                                 <Box sx={{ display: 'flex', gap: 0.5, p: 1, ml: 1 }}>
                                     <Box sx={{ width: 6, height: 6, bgcolor: 'primary.main', borderRadius: '50%', animation: 'pulse 1s infinite' }} />
                                     <Box sx={{ width: 6, height: 6, bgcolor: 'primary.main', borderRadius: '50%', animation: 'pulse 1s infinite 0.2s' }} />
@@ -360,27 +308,30 @@ export default function ManagerPage() {
 
                         {/* Chat Input */}
                         <Box sx={{ p: 2, bgcolor: 'background.paper', borderTop: '1px solid', borderColor: 'divider' }}>
-                            <Box sx={{
-                                display: 'flex',
-                                gap: 1,
-                                bgcolor: '#F3F4F6',
-                                p: 0.5,
-                                borderRadius: '20px',
-                                alignItems: 'center',
-                                pl: 2
-                            }}>
+                            <Box
+                                component="form"
+                                onSubmit={handleSubmit}
+                                sx={{
+                                    display: 'flex',
+                                    gap: 1,
+                                    bgcolor: '#F3F4F6',
+                                    p: 0.5,
+                                    borderRadius: '20px',
+                                    alignItems: 'center',
+                                    pl: 2
+                                }}
+                            >
                                 <TextField
                                     fullWidth
                                     placeholder="Type a message..."
                                     variant="standard"
                                     value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                                    onChange={handleInputChange}
                                     InputProps={{ disableUnderline: true, style: { fontSize: '0.9rem' } }}
                                 />
                                 <IconButton
-                                    onClick={handleSend}
-                                    disabled={!input.trim()}
+                                    type="submit"
+                                    disabled={!input.trim() || isLoading}
                                     size="small"
                                     sx={{
                                         bgcolor: input.trim() ? 'primary.main' : 'action.disabledBackground',

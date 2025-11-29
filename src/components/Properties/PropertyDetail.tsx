@@ -113,7 +113,7 @@ export default function PropertyDetail({ propertyId }: PropertyDetailProps) {
 
             <CustomTabPanel value={value} index={0}>
                 <Grid container spacing={3}>
-                    <Grid item xs={12} md={8}>
+                    <Grid size={{ xs: 12, md: 8 }}>
                         <Card sx={{ p: 3, mb: 3 }}>
                             <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Description</Typography>
                             <Typography variant="body1" color="text.secondary" paragraph>
@@ -142,7 +142,7 @@ export default function PropertyDetail({ propertyId }: PropertyDetailProps) {
                             </Box>
                         </Card>
                     </Grid>
-                    <Grid item xs={12} md={4}>
+                    <Grid size={{ xs: 12, md: 4 }}>
                         <Card sx={{ p: 3 }}>
                             <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Property Details</Typography>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -172,7 +172,7 @@ export default function PropertyDetail({ propertyId }: PropertyDetailProps) {
                     <Grid container spacing={2}>
                         {propertyTenants.length > 0 ? (
                             propertyTenants.map((tenant) => (
-                                <Grid item xs={12} md={6} key={tenant.id}>
+                                <Grid size={{ xs: 12, md: 6 }} key={tenant.id}>
                                     <Card variant="outlined" sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                             <Avatar>{tenant.name[0]}</Avatar>

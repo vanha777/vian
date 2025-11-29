@@ -9,15 +9,19 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/google": "^1.0.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@google/generative-ai": "^0.24.1",
     "@mui/icons-material": "^7.3.5",
     "@mui/material": "^7.3.5",
+    "@supabase/supabase-js": "^2.86.0",
+    "ai": "^4.0.0",
     "framer-motion": "^12.23.24",
     "next": "16.0.5",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20",

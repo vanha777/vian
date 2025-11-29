@@ -52,7 +52,7 @@ export default function TenantDetail({ tenantId }: TenantDetailProps) {
             </Box>
 
             <Grid container spacing={3}>
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                     <Card sx={{ p: 3, mb: 3 }}>
                         <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Contact Information</Typography>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -92,7 +92,7 @@ export default function TenantDetail({ tenantId }: TenantDetailProps) {
                     </Card>
                 </Grid>
 
-                <Grid item xs={12} md={8}>
+                <Grid size={{ xs: 12, md: 8 }}>
                     <Card sx={{ p: 3, mb: 3 }}>
                         <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Payment History</Typography>
                         <Typography color="text.secondary">Recent payment records will appear here.</Typography>

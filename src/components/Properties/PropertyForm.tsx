@@ -15,7 +15,7 @@ interface PropertyFormProps {
         type: string;
         status: string;
         units: number;
-        image: string;
+        image?: string;
         revenue: number;
     };
     isEdit?: boolean;
