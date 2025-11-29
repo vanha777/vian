@@ -16,6 +16,7 @@ import PropertyForm from '@/components/Properties/PropertyForm';
 import TenantTable from '@/components/Tenants/TenantTable';
 import TenantDetail from '@/components/Tenants/TenantDetail';
 import PropertyDetail from '@/components/Properties/PropertyDetail';
+import OverviewStats from '@/components/Dashboard/OverviewStats';
 import StatsCard from '@/components/Dashboard/StatsCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from 'ai/react';
@@ -42,88 +43,96 @@ export default function ManagerPage() {
 
     // Effect to handle tool invocations and update the main view
     React.useEffect(() => {
-        const lastMessage = messages[messages.length - 1];
-        if (lastMessage?.role === 'assistant' && lastMessage.toolInvocations) {
-            // We take the last tool invocation to decide what to show in the main view
-            const toolInvocation = lastMessage.toolInvocations[lastMessage.toolInvocations.length - 1];
+        // Scan the last few messages to find the most recent tool invocation
+        // This handles cases where the model generates text after the tool call
+        const recentMessages = messages.slice(-3); // Look at last 3 messages
+        let foundToolInvocation = null;
 
-            if (!toolInvocation) return;
-
-            const { toolName, args } = toolInvocation;
-
-            if (toolName === 'get_properties') {
-                setActiveComponent(
-                    <Box sx={{ width: '100%', maxWidth: '1200px', mx: 'auto' }}>
-                        <PropertyTable />
-                    </Box>
-                );
-            } else if (toolName === 'get_stats') {
-                // For stats, we might want to render based on args or just show the default stats card
-                // The args from the tool execution (result) would be more useful here, but for now we render the component
-                setActiveComponent(
-                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
-                        <StatsCard
-                            title="Total Revenue"
-                            value="$245,000"
-                            icon={<AttachMoneyIcon />}
-                            trend="+12% vs last month"
-                            trendColor="success"
-                        />
-                        <StatsCard
-                            title="Occupancy Rate"
-                            value="94%"
-                            icon={<PersonIcon />}
-                            trend="+2% vs last month"
-                            trendColor="success"
-                        />
-                    </Box>
-                );
-            } else if (toolName === 'create_property') {
-                setActiveComponent(
-                    <Box sx={{ width: '100%', maxWidth: '800px', mx: 'auto', bgcolor: 'background.paper', p: 4, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-                        <Typography variant="h5" fontWeight="bold" mb={3}>
-                            Add New Property
-                        </Typography>
-                        <PropertyForm isEdit={false} />
-                    </Box>
-                );
-            } else if (toolName === 'edit_property') {
-                // In a real scenario, we'd use the result of the tool call to populate initialData
-                // For now, we'll assume the tool returns the data needed
-                setActiveComponent(
-                    <Box sx={{ width: '100%', maxWidth: '800px', mx: 'auto', bgcolor: 'background.paper', p: 4, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-                        <Typography variant="h5" fontWeight="bold" mb={3}>
-                            Edit Property
-                        </Typography>
-                        {/* Mocking initial data for edit */}
-                        <PropertyForm initialData={{ name: 'Sunset Apartments', address: '123 Main St', type: 'Residential', status: 'Good', units: 12, revenue: 15000, image: '/static/images/property/1.jpg' }} isEdit={true} />
-                    </Box>
-                );
-            } else if (toolName === 'get_tenants') {
-                setActiveComponent(
-                    <Box sx={{ width: '100%', maxWidth: '1200px', mx: 'auto' }}>
-                        <TenantTable />
-                    </Box>
-                );
-            } else if (toolName === 'get_tenant_detail') {
-                const tenantId = (args as any).tenantId;
-                if (tenantId) {
-                    setActiveComponent(
-                        <Box sx={{ width: '100%', maxWidth: '1200px', mx: 'auto' }}>
-                            <TenantDetail tenantId={tenantId} />
-                        </Box>
-                    );
-                }
-            } else if (toolName === 'get_property_detail') {
-                const propertyId = (args as any).propertyId;
-                if (propertyId) {
-                    setActiveComponent(
-                        <Box sx={{ width: '100%', maxWidth: '1200px', mx: 'auto' }}>
-                            <PropertyDetail propertyId={propertyId} />
-                        </Box>
-                    );
-                }
+        for (let i = recentMessages.length - 1; i >= 0; i--) {
+            const msg = recentMessages[i];
+            if (msg.role === 'assistant' && msg.toolInvocations && msg.toolInvocations.length > 0) {
+                foundToolInvocation = msg.toolInvocations[msg.toolInvocations.length - 1];
+                break;
             }
+        }
+
+        if (!foundToolInvocation) return;
+
+        const { toolName, args } = foundToolInvocation;
+
+        if (toolName === 'get_properties') {
+            setActiveComponent(
+                <Box sx={{ width: '100%', maxWidth: '1200px', mx: 'auto' }}>
+                    <PropertyTable />
+                </Box>
+            );
+        } else if (toolName === 'get_stats') {
+            setActiveComponent(
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+                    <StatsCard
+                        title="Total Revenue"
+                        value="$245,000"
+                        icon={<AttachMoneyIcon />}
+                        trend="+12% vs last month"
+                        trendColor="success"
+                    />
+                    <StatsCard
+                        title="Occupancy Rate"
+                        value="94%"
+                        icon={<PersonIcon />}
+                        trend="+2% vs last month"
+                        trendColor="success"
+                    />
+                </Box>
+            );
+        } else if (toolName === 'create_property') {
+            setActiveComponent(
+                <Box sx={{ width: '100%', maxWidth: '800px', mx: 'auto', bgcolor: 'background.paper', p: 4, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                    <Typography variant="h5" fontWeight="bold" mb={3}>
+                        Add New Property
+                    </Typography>
+                    <PropertyForm isEdit={false} />
+                </Box>
+            );
+        } else if (toolName === 'edit_property') {
+            setActiveComponent(
+                <Box sx={{ width: '100%', maxWidth: '800px', mx: 'auto', bgcolor: 'background.paper', p: 4, borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                    <Typography variant="h5" fontWeight="bold" mb={3}>
+                        Edit Property
+                    </Typography>
+                    <PropertyForm initialData={{ name: 'Sunset Apartments', address: '123 Main St', type: 'Residential', status: 'Good', units: 12, revenue: 15000, image: '/static/images/property/1.jpg' }} isEdit={true} />
+                </Box>
+            );
+        } else if (toolName === 'get_tenants') {
+            setActiveComponent(
+                <Box sx={{ width: '100%', maxWidth: '1200px', mx: 'auto' }}>
+                    <TenantTable />
+                </Box>
+            );
+        } else if (toolName === 'get_tenant_detail') {
+            const tenantId = (args as any).tenantId;
+            if (tenantId) {
+                setActiveComponent(
+                    <Box sx={{ width: '100%', maxWidth: '1200px', mx: 'auto' }}>
+                        <TenantDetail tenantId={tenantId} />
+                    </Box>
+                );
+            }
+        } else if (toolName === 'get_property_detail') {
+            const propertyId = (args as any).propertyId;
+            if (propertyId) {
+                setActiveComponent(
+                    <Box sx={{ width: '100%', maxWidth: '1200px', mx: 'auto' }}>
+                        <PropertyDetail propertyId={propertyId} />
+                    </Box>
+                );
+            }
+        } else if (toolName === 'get_overview') {
+            setActiveComponent(
+                <Box sx={{ width: '100%', maxWidth: '1200px', mx: 'auto' }}>
+                    <OverviewStats />
+                </Box>
+            );
         }
     }, [messages]);
 

@@ -8,6 +8,8 @@ import Badge from '@mui/material/Badge';
 import NotificationsIcon from '@mui/icons-material/NotificationsNoneRounded';
 import Avatar from '@mui/material/Avatar';
 import { alpha, useTheme } from '@mui/material/styles';
+import { usePathname, useRouter } from 'next/navigation';
+import ArrowBackIcon from '@mui/icons-material/ArrowBackRounded';
 
 const AIStatus = () => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, borderRadius: '20px', bgcolor: 'rgba(56, 189, 248, 0.08)' }}>
@@ -20,6 +22,9 @@ const AIStatus = () => (
 
 export default function Header() {
     const theme = useTheme();
+    const pathname = usePathname();
+    const router = useRouter();
+    const isManager = pathname === '/manager';
 
     return (
         <Box sx={{ px: 1 }}>
@@ -32,9 +37,21 @@ export default function Header() {
             }}>
                 {/* Title Section */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    {isManager && (
+                        <IconButton
+                            onClick={() => router.push('/')}
+                            sx={{
+                                bgcolor: 'white',
+                                boxShadow: '0px 2px 4px rgba(0,0,0,0.05)',
+                                '&:hover': { bgcolor: '#F9FAFB' }
+                            }}
+                        >
+                            <ArrowBackIcon />
+                        </IconButton>
+                    )}
                     <Box>
                         <Typography variant="h5" noWrap component="div" color="text.primary" fontWeight="800" sx={{ letterSpacing: '-0.5px' }}>
-                            Dashboard
+                            {isManager ? 'AI Manager' : 'Dashboard'}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
                             Welcome back, Patrick

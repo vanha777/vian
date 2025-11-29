@@ -4,13 +4,18 @@ import Box from '@mui/material/Box';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
+import { usePathname } from 'next/navigation';
+
 const drawerWidth = 280;
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
+    const pathname = usePathname();
+    const isManager = pathname === '/manager';
+
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#F3F4F6', p: 3, gap: 3 }}>
-            <Sidebar />
-            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 3, maxWidth: `calc(100% - ${drawerWidth}px - 24px)` }}>
+            {!isManager && <Sidebar />}
+            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 3, maxWidth: isManager ? '100%' : `calc(100% - ${drawerWidth}px - 24px)` }}>
                 <Header />
                 <Box
                     component="main"

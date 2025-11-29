@@ -94,4 +94,16 @@ export const tools = {
             };
         },
     }),
+    get_overview: tool({
+        description: 'Get overview statistics and charts for the dashboard',
+        parameters: z.object({}),
+        execute: async () => {
+            return {
+                revenue: [4000, 3000, 2000, 2780, 1890, 2390, 3490],
+                occupancy: 85,
+                maintenance: { pending: 19, resolved: 59 },
+                satisfaction: 4.8
+            };
+        },
+    }),
 };

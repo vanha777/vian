@@ -25,6 +25,8 @@ export async function POST(req: Request) {
     - Use 'get_tenant_detail' when the user asks for details about a specific tenant.
     - Use 'create_property' when the user wants to add a new property.
     - Use 'edit_property' when the user wants to edit an existing property.
+    - Use 'get_overview' when the user asks for a dashboard overview or general statistics.
+    - Use 'get_overview' when the user asks for a dashboard overview or general statistics.
     
     If the user's request can be answered by one of these tools, call the appropriate tool.
     If the user's request is a general question or greeting, respond with a helpful text message.
